@@ -31,7 +31,7 @@
 ##      ```json
 ##      {
 ##        "text": "Hello, this is ElevenLabs.",
-##        "model_id": "eleven_monolingual_v1",
+##        "model_id": "eleven_multilingual_v2",
 ##        "voice_settings": {
 ##          "stability": 0.5,
 ##          "similarity_boost": 0.5
@@ -71,7 +71,7 @@ const
   DefaultElevenLabsVoiceId* = "21m00Tcm4TlvDq8ikWAM"
     ## "Rachel" — the default English voice documented in the
     ## ElevenLabs quick-start.
-  DefaultElevenLabsModelId* = "eleven_monolingual_v1"
+  DefaultElevenLabsModelId* = "eleven_multilingual_v2"
   DefaultStability* = 0.5
   DefaultSimilarityBoost* = 0.5
   ApiKeyEnvVar* = "ELEVENLABS_API_KEY"

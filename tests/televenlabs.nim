@@ -47,6 +47,12 @@ import std/[asynchttpserver, asyncdispatch, httpcore, json,
 import gui_assert/speech_synthesis
 import gui_assert_elevenlabs
 
+# Capture the live API key at module load — pure tests below call
+# `delEnv(ApiKeyEnvVar)` to assert "missing key" behaviour. Nim's
+# `unittest` runs test bodies eagerly as the module loads, so we must
+# read the env *before* the pure suites execute.
+let PreservedElevenLabsApiKey* {.used.} = getEnv(ApiKeyEnvVar)
+
 # ---------------------------------------------------------------------------
 # Path helpers
 # ---------------------------------------------------------------------------
@@ -126,16 +132,16 @@ suite "elevenlabs request body":
 
   test "builds the documented v1 JSON shape":
     let body = buildTtsBody("Hello, this is ElevenLabs.",
-                            "eleven_monolingual_v1")
+                            "eleven_multilingual_v2")
     check body.kind == JObject
     check body["text"].getStr == "Hello, this is ElevenLabs."
-    check body["model_id"].getStr == "eleven_monolingual_v1"
+    check body["model_id"].getStr == "eleven_multilingual_v2"
     check body["voice_settings"].kind == JObject
     check body["voice_settings"]["stability"].getFloat == 0.5
     check body["voice_settings"]["similarity_boost"].getFloat == 0.5
 
   test "uses snake_case keys (model_id, voice_settings, similarity_boost)":
-    let body = buildTtsBody("hi", "eleven_monolingual_v1")
+    let body = buildTtsBody("hi", "eleven_multilingual_v2")
     check body.hasKey("model_id")
     check body.hasKey("voice_settings")
     check body["voice_settings"].hasKey("similarity_boost")
@@ -181,10 +187,10 @@ suite "elevenlabs opts resolution":
     check resolveApiBase(opts) == DefaultElevenLabsApiBase
     check DefaultElevenLabsApiBase == "https://api.elevenlabs.io"
 
-  test "resolveModelId defaults to eleven_monolingual_v1":
+  test "resolveModelId defaults to current multilingual model":
     let opts = SpeechSynthesisOpts(providerSettings: newJObject())
     check resolveModelId(opts) == DefaultElevenLabsModelId
-    check DefaultElevenLabsModelId == "eleven_monolingual_v1"
+    check DefaultElevenLabsModelId == "eleven_multilingual_v2"
 
   test "resolveModelId reads providerSettings override":
     let opts = SpeechSynthesisOpts(
@@ -284,7 +290,7 @@ suite "elevenlabs cache key":
     check k1 != k2
 
   test "different model_id -> different salt -> different key":
-    let saltA = elevenlabsCacheSalt("eleven_monolingual_v1", 22050,
+    let saltA = elevenlabsCacheSalt("eleven_multilingual_v2", 22050,
                                     0.5, 0.5)
     let saltB = elevenlabsCacheSalt("eleven_multilingual_v2", 22050,
                                     0.5, 0.5)
@@ -572,12 +578,13 @@ when defined(elevenlabsLive):
   suite "elevenlabs live render against api.elevenlabs.io":
 
     test "synthesizes a real WAV via the ElevenLabs API":
-      doAssert getEnv(ApiKeyEnvVar).len > 0,
+      doAssert PreservedElevenLabsApiKey.len > 0,
         "ELEVENLABS_API_KEY is not set. Live ElevenLabs tests require " &
         "a real API key from https://elevenlabs.io (Starter $5/mo " &
         "includes ~30 min of TTS; Creator $22/mo; Pro $99/mo; " &
         "Scale $330/mo). Export ELEVENLABS_API_KEY=<your key> and " &
         "re-run with -d:elevenlabsLive."
+      putEnv(ApiKeyEnvVar, PreservedElevenLabsApiKey)
 
       let tmp = getTempDir() / "televenlabs_live"
       if dirExists(tmp): removeDir(tmp)
@@ -587,18 +594,21 @@ when defined(elevenlabsLive):
       registerElevenLabs(r)
 
       let outWav = tmp / "live.wav"
+      # Sarah (EXAVITQu4vr4xnSDxMaL) is accessible on the free tier;
+      # Rachel (21m00Tcm4TlvDq8ikWAM, the historical default) is gated
+      # to paid plans on newer accounts.
       let opts = SpeechSynthesisOpts(
-        voiceId: none(string),
+        voiceId: some("EXAVITQu4vr4xnSDxMaL"),
         rate: none(int),
         sampleRateHz: some(22050),
         cacheDir: some(tmp / "cache"),
-        providerSettings: newJObject(),
+        providerSettings: %*{"api_key": PreservedElevenLabsApiKey},
         extraArgs: @[],
       )
 
       let started = epochTime()
       synthesizeWith(r, "elevenlabs",
-                    "Hello GuiAssert ElevenLabs",
+                    "Hello GuiAssert ElevenLabs. This is a real Rachel voice render.",
                     outWav, opts)
       let dt = epochTime() - started
       echo &"  live ElevenLabs render took {dt:.2f}s"
