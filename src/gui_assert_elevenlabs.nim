@@ -58,6 +58,7 @@ import std/[json, options, os, osproc, streams, strutils]
 import std/[httpclient, sha1]
 
 import gui_assert/speech_synthesis
+import gui_assert/emotive
 
 type
   ElevenLabsError* = object of SpeechSynthesisError
@@ -358,6 +359,134 @@ proc elevenlabsSynthesize(text, outputWavPath: string,
 
   {.cast(gcsafe).}:
     discard applySpeechCache(cacheDir, key, outputWavPath, generator)
+
+# ---------------------------------------------------------------------------
+# Capabilities + emotive translation + discovery + dry-run
+# ---------------------------------------------------------------------------
+
+const ElevenLabsCapabilities* = ProviderCapabilities(
+  supportsEmotion: false,           ## not directly; emotion baked into voice
+  supportsHeadMotion: false,
+  supportsExpressionScale: false,
+  supportsGreenScreen: false,
+  supportsTransparentBg: false,
+  supportsAudioInput: false,
+  supportsTextInput: true,
+  supportsVoiceTuning: true,        ## stability + similarity_boost + style
+  supportsGestures: false,
+  supportsEyeContact: false,
+  supportedEmotions: @[],
+)
+
+proc emotiveToProviderSettings*(c: CommonEmotiveConfig;
+                                base: JsonNode = nil): JsonNode =
+  ## Project a `CommonEmotiveConfig` onto the flat providerSettings
+  ## dialect this plugin understands (`stability`,
+  ## `similarity_boost`, `style`, `use_speaker_boost`).  Caller-set
+  ## values in `base` win.
+  ##
+  ## Intensity acts as a *style* nudge — the higher the intensity,
+  ## the more the model is allowed to deviate from a flat read, so
+  ## it's mapped onto `style` when the consumer hasn't supplied a
+  ## value explicitly.
+  result = if base.isNil or base.kind != JObject: newJObject() else: base
+  if c.voiceStability.isSome:
+    setIfMissing(result, "stability", %c.voiceStability.get)
+  if c.voiceSimilarityBoost.isSome:
+    setIfMissing(result, "similarity_boost",
+                 %c.voiceSimilarityBoost.get)
+  if c.voiceStyle.isSome:
+    setIfMissing(result, "style", %c.voiceStyle.get)
+  elif c.intensity.isSome:
+    setIfMissing(result, "style", %c.intensity.get)
+  if c.useSpeakerBoost.isSome:
+    setIfMissing(result, "use_speaker_boost", %c.useSpeakerBoost.get)
+
+proc parseGenderField(node: JsonNode): Gender =
+  if node.isNil or node.kind != JString: return gUnspecified
+  parseGender(node.getStr)
+
+proc listVoices*(apiKey: string;
+                 apiBase: string = DefaultElevenLabsApiBase):
+    seq[AvatarInfo] =
+  ## `GET /v1/voices` — voice catalogue available on the supplied
+  ## account.  Voice metadata is normalised onto `AvatarInfo` so
+  ## `matchPreferredAvatar` works against voices the same way it
+  ## works against avatars on the sibling talking-head plugins.
+  result = @[]
+  if apiKey.len == 0:
+    raise newException(ElevenLabsError,
+      "listVoices: ELEVENLABS_API_KEY is required")
+  let client = newElevenLabsHttpClient(apiKey)
+  try:
+    let resp = client.request(apiBase & "/v1/voices",
+                              httpMethod = HttpGet)
+    if not resp.code.is2xx:
+      raiseHttp("GET /v1/voices", resp)
+    let parsed = parseJson(resp.body)
+    if parsed.kind != JObject or not parsed.hasKey("voices"): return
+    let lst = parsed["voices"]
+    if lst.kind != JArray: return
+    for it in lst.items:
+      if it.kind != JObject: continue
+      var a = AvatarInfo()
+      a.id = it{"voice_id"}.getStr("")
+      a.name = it{"name"}.getStr("")
+      a.description = it{"description"}.getStr("")
+      a.previewUrl = it{"preview_url"}.getStr("")
+      if it.hasKey("labels") and it["labels"].kind == JObject:
+        let lab = it["labels"]
+        if lab.hasKey("gender") and lab["gender"].kind == JString:
+          a.gender = parseGender(lab["gender"].getStr)
+        for k, v in lab:
+          if k == "gender": continue
+          if v.kind == JString: a.tags.add v.getStr
+      result.add a
+  finally:
+    closeQuietly(client)
+
+# Backwards-compatible alias mirroring the talking-head plugins.
+proc listAvatars*(apiKey: string;
+                  apiBase: string = DefaultElevenLabsApiBase):
+    seq[AvatarInfo] {.inline.} =
+  listVoices(apiKey, apiBase)
+
+proc dryRunValidate*(opts: SpeechSynthesisOpts;
+                     prefs: AvatarPreferences = AvatarPreferences()):
+    DryRunReport =
+  ## Validate locally + against the live ElevenLabs voice catalogue:
+  ## API key presence, voice id existence, and — when `prefs` is
+  ## non-empty — whether any preferred voice matches the live list.
+  result = newDryRunReport("elevenlabs")
+  let apiKey = resolveApiKey(opts)
+  if apiKey.len == 0:
+    result.addIssue(drError, "api_key",
+      "ELEVENLABS_API_KEY is not set (or providerSettings.api_key is empty)")
+    return
+  let apiBase = resolveApiBase(opts)
+  var voiceId = resolveVoiceId(opts)
+  var available: seq[AvatarInfo] = @[]
+  try:
+    available = listVoices(apiKey, apiBase)
+  except CatchableError as e:
+    result.addIssue(drWarning, "voices",
+      "could not list voices: " & e.msg)
+  if prefs.preferred.len > 0 and available.len > 0:
+    let m = matchPreferredAvatar(prefs, "elevenlabs", available)
+    if m.isSome:
+      voiceId = m.get.id
+    else:
+      result.addIssue(drWarning, "avatar_preferences",
+        "no preferred voice matched; using opts default '" & voiceId & "'")
+  if available.len > 0:
+    var hit = false
+    for v in available:
+      if v.id == voiceId:
+        hit = true; break
+    if not hit:
+      result.addIssue(drError, "voice_id",
+        "voice '" & voiceId & "' is not in the account's voice list " &
+        "(deprecated / paid-only / typo)")
 
 proc elevenlabsProvider*(): SpeechSynthesisProvider =
   ## Build the ElevenLabs provider value with production defaults.
