@@ -290,9 +290,9 @@ suite "elevenlabs cache key":
     check k1 != k2
 
   test "different model_id -> different salt -> different key":
-    let saltA = elevenlabsCacheSalt("eleven_multilingual_v2", 22050,
+    let saltA = elevenlabsCacheSalt("model-a", 22050,
                                     0.5, 0.5)
-    let saltB = elevenlabsCacheSalt("eleven_multilingual_v2", 22050,
+    let saltB = elevenlabsCacheSalt("model-b", 22050,
                                     0.5, 0.5)
     check saltA != saltB
     let k1 = speechCacheKeyFor("hi", ProviderName,
