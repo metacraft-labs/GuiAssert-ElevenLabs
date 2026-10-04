@@ -14,3 +14,4 @@ requires "nim >= 2.0.0"
 task test, "Run plugin tests":
   exec "nim c -r --hints:off --path:src tests/tnimcache_is_worktree_local.nim"
   exec "nim c -r --threads:on --hints:off --path:src --path:../GuiAssert/src tests/televenlabs.nim"
+  exec "nim c -r --threads:on --hints:off --path:src --path:../GuiAssert/src tests/temotive_translation.nim"
