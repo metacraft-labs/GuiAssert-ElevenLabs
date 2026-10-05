@@ -16,7 +16,7 @@ test:
     nim c -r --threads:on --hints:off --path:src --path:../GuiAssert/src tests/televenlabs.nim
     nim c -r --threads:on --hints:off --path:src --path:../GuiAssert/src tests/temotive_translation.nim
 
-# End-to-end live test against the real ElevenLabs API.  Requires
+# On-demand paid live test against the real ElevenLabs API. Requires
 # ELEVENLABS_API_KEY to be set in the environment; the test compiles
 # but fails loudly if it is missing (no graceful skips per project
 # policy).

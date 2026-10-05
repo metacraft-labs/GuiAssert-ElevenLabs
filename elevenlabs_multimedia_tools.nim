@@ -28,4 +28,3 @@ package elevenlabs_ffprobe:
     nixPackage "nixpkgs#ffmpeg-full", executablePath = "bin/ffprobe",
       nixpkgsRev = owningNixpkgs["rev"].getStr,
       nixpkgsNarHash = owningNixpkgs["narHash"].getStr
-

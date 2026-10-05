@@ -1,5 +1,5 @@
 ## Complete existing three-module corpus; live commercial API acceptance
-## remains the unchanged separate mandatory just test-live gate.
+## remains the unchanged separate on-demand paid just test-live gate.
 import repro_project_dsl
 import repro_dsl_stdlib/foreign_env
 import ct_test_nim_unittest
