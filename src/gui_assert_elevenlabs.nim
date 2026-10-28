@@ -57,14 +57,14 @@
 import std/[json, options, os, osproc, streams, strutils]
 import std/[httpclient, sha1]
 
-import gui_assert/speech_synthesis
-import gui_assert/emotive
+import demo_video_studio/plugins/speech_synthesis
+import demo_video_studio/emotive
 
 type
   ElevenLabsError* = object of SpeechSynthesisError
     ## Raised by the low-level HTTP / ffmpeg entry points.  Subclasses
     ## `SpeechSynthesisError` so the generic dispatch in
-    ## `gui_assert/speech_synthesis` can catch it uniformly.
+    ## `demo_video_studio/plugins/speech_synthesis` can catch it uniformly.
 
 const
   ProviderName* = "elevenlabs"
@@ -500,7 +500,7 @@ proc registerElevenLabs*(reg: SpeechSynthesisRegistry) =
   ## One-liner plugin entry point.  Callers do:
   ##
   ## ```nim
-  ## import gui_assert/speech_synthesis
+  ## import demo_video_studio/plugins/speech_synthesis
   ## import gui_assert_elevenlabs
   ##
   ## let reg = newDefaultSpeechRegistry()

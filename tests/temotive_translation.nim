@@ -1,7 +1,7 @@
 ## Pure tests for ElevenLabs emotive translation + capability self-description.
 
 import std/[json, options, unittest]
-import gui_assert/speech_synthesis, gui_assert/emotive
+import demo_video_studio/plugins/speech_synthesis, demo_video_studio/emotive
 import gui_assert_elevenlabs
 
 suite "ElevenLabs emotiveToProviderSettings":

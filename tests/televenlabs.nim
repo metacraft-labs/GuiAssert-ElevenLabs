@@ -35,7 +35,7 @@
 ## ## Live test (compile-time-gated via `-d:elevenlabsLive`)
 ##
 ##   nim c -d:elevenlabsLive -r --threads:on --hints:off \
-##       --path:src --path:../GuiAssert/src tests/televenlabs.nim
+##       --path:src --path:../DemoVideoStudio/src --path:../GuiAssert/src tests/televenlabs.nim
 ##
 ## Requires `ELEVENLABS_API_KEY` to be set.  Per project policy, the
 ## live suite never silently skips: a missing key is a test failure.
@@ -44,7 +44,7 @@ import std/[asynchttpserver, asyncdispatch, httpcore, json,
             net, options, os, osproc, streams, strformat, strutils,
             tables, times, unittest]
 
-import gui_assert/speech_synthesis
+import demo_video_studio/plugins/speech_synthesis
 import gui_assert_elevenlabs
 
 # Capture the live API key at module load — pure tests below call
