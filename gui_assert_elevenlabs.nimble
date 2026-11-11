@@ -5,7 +5,7 @@ license       = "MIT"
 srcDir        = "src"
 
 requires "nim >= 2.0.0"
-# Consumed as a relative path: callers pass `--path:../GuiAssert/src`
+# Consumed as a relative path: callers pass `--path:../DemoVideoStudio/src`
 # when compiling.  We do not list `requires "gui_assert"` here because
 # nimble cannot resolve sibling-path dependencies through the public
 # registry; the workspace layout described in metacraft/CLAUDE.md is
@@ -13,4 +13,5 @@ requires "nim >= 2.0.0"
 
 task test, "Run plugin tests":
   exec "nim c -r --hints:off --path:src tests/tnimcache_is_worktree_local.nim"
-  exec "nim c -r --threads:on --hints:off --path:src --path:../GuiAssert/src tests/televenlabs.nim"
+  exec "nim c -r --threads:on --hints:off --path:src --path:../DemoVideoStudio/src tests/televenlabs.nim"
+  exec "nim c -r --threads:on --hints:off --path:src --path:../DemoVideoStudio/src tests/temotive_translation.nim"

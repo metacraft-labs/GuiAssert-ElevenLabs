@@ -31,3 +31,10 @@ tests/tnimcache_is_worktree_local
 
 # Repro development environment artifacts
 .repro/
+
+# Generated owning flake hook configuration.
+/.pre-commit-config.yaml
+
+# Explicit declared typed test outputs and compiler intermediates.
+/build/test-bin/
+/build/nimcache/

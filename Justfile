@@ -19,6 +19,7 @@ default: test
 test:
     nim c -r --hints:off --path:src tests/tnimcache_is_worktree_local.nim
     nim c -r --threads:on --hints:off --path:src --path:{{studio_src}} --path:{{gui_assert_src}} tests/televenlabs.nim
+    nim c -r --threads:on --hints:off --path:src --path:{{studio_src}} --path:{{gui_assert_src}} tests/temotive_translation.nim
     nim c -r --hints:off --path:src --path:{{studio_src}} --path:{{gui_assert_src}} tests/tcontract.nim
 
 # End-to-end live test against the real ElevenLabs API.  Requires
