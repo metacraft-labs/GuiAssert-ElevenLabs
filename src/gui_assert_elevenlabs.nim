@@ -9,7 +9,7 @@
 ## Unlike the talking-head plugins, ElevenLabs targets a *different*
 ## GuiAssert contract: the M7 `SpeechSynthesisProvider` interface
 ## introduced alongside this plugin.  The native local TTS dispatcher
-## in `gui_assert/speech_synth` is unchanged and continues to drive
+## in `demo_video_studio/speech_synth` is unchanged and continues to drive
 ## the host-OS `say` / SAPI / espeak-ng backends; this plugin makes
 ## ElevenLabs available as a swappable alternative whose voice
 ## quality and language coverage are typically higher than the
@@ -57,14 +57,14 @@
 import std/[json, options, os, osproc, streams, strutils]
 import std/[httpclient, sha1]
 
-import gui_assert/speech_synthesis
-import gui_assert/emotive
+import demo_video_studio/plugins/speech_synthesis
+import demo_video_studio/emotive
 
 type
   ElevenLabsError* = object of SpeechSynthesisError
     ## Raised by the low-level HTTP / ffmpeg entry points.  Subclasses
     ## `SpeechSynthesisError` so the generic dispatch in
-    ## `gui_assert/speech_synthesis` can catch it uniformly.
+    ## `demo_video_studio/speech_synthesis` can catch it uniformly.
 
 const
   ProviderName* = "elevenlabs"
@@ -500,7 +500,7 @@ proc registerElevenLabs*(reg: SpeechSynthesisRegistry) =
   ## One-liner plugin entry point.  Callers do:
   ##
   ## ```nim
-  ## import gui_assert/speech_synthesis
+  ## import demo_video_studio/plugins/speech_synthesis
   ## import gui_assert_elevenlabs
   ##
   ## let reg = newDefaultSpeechRegistry()

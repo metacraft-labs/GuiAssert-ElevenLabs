@@ -27,12 +27,12 @@ consumers can swap among text-to-speech backends without affecting
 the talking-head pipeline.
 
 The contract lives in
-`gui_assert/speech_synthesis/core` and mirrors the shape of the
+`demo_video_studio/speech_synthesis/core` and mirrors the shape of the
 `TalkingHeadProvider` contract: a `name` + `isAvailable` +
 `synthesize` value type, a registry, and the same
 `speechCacheKeyFor` / `applySpeechCache` helpers.
 
-The non-pluggable `gui_assert/speech_synth.synthesize(text, path)`
+The non-pluggable `demo_video_studio/speech_synth.synthesize(text, path)`
 dispatcher used by the existing marketing runner and other
 consumers is unchanged. It now routes through the new contract
 internally (host-OS built-in provider, registered automatically),
@@ -101,7 +101,7 @@ against accidental "fixes" that would prepend a `Bearer ` or
 ## Wiring into a runner
 
 ```nim
-import gui_assert/speech_synthesis
+import demo_video_studio/plugins/speech_synthesis
 import gui_assert_elevenlabs
 
 let reg = newDefaultSpeechRegistry()   # pre-registers the host-OS provider
@@ -200,10 +200,10 @@ requests.
 
 ```sh
 # Pure unit tests + mock-server integration test — no network.
-nim c -r --threads:on --hints:off --path:src --path:../GuiAssert/src tests/televenlabs.nim
+nim c -r --threads:on --hints:off --path:src --path:../DemoVideoStudio/src tests/televenlabs.nim
 
 # Live end-to-end against api.elevenlabs.io — requires ELEVENLABS_API_KEY.
-nim c -d:elevenlabsLive -r --threads:on --hints:off --path:src --path:../GuiAssert/src tests/televenlabs.nim
+nim c -d:elevenlabsLive -r --threads:on --hints:off --path:src --path:../DemoVideoStudio/src tests/televenlabs.nim
 ```
 
 The `--threads:on` flag is required because the mock-server test

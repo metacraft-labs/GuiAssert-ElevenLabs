@@ -3,7 +3,7 @@
 
   inputs = {
     standard-hooks-src = {
-      url = "github:metacraft-labs/devops-modules/c8ef41d446e211892fe9775182b43d5d517554ac";
+      url = "github:metacraft-labs/devops-modules/f1b80ff31d6ca681b67c83d36fc29e6c8e23a7a6";
       flake = false;
     };
     nixos-modules.url = "github:metacraft-labs/devops-modules";
@@ -47,61 +47,13 @@
             unset _own_repo_root
           '';
 
-          expectedNativeHook =
-            pkgs.runCommand "elevenlabs-native-pre-commit-hook"
-              {
-                nativeBuildInputs = [
-                  pkgs.git
-                  preCommit.config.package
-                ];
-              }
-              ''
-                export PRE_COMMIT_HOME="$TMPDIR/elevenlabs-native-hook-cache"
-                mkdir -p "$PRE_COMMIT_HOME" fixture
-                cd fixture
-                export GIT_CONFIG_GLOBAL="$TMPDIR/elevenlabs-native-factory-gitconfig"
-                export GIT_CONFIG_NOSYSTEM=1
-                : > "$GIT_CONFIG_GLOBAL"
-                git init --template= >/dev/null
-                if git config --get core.hooksPath; then
-                  echo 'Unexpected native factory hooksPath authority' >&2
-                  exit 1
-                fi
-                test "$(git rev-parse --path-format=absolute --git-path hooks)" = "$PWD/.git/hooks"
-                ln -s ${preCommit.config.configFile} ${preCommit.config.configPath}
-                mkdir -p "$out"
-                for hook in pre-commit pre-push; do
-                  ${preCommit.config.package}/bin/pre-commit install -c ${preCommit.config.configPath} -t "$hook"
-                  install -m 0755 ".git/hooks/$hook" "$out/$hook"
-                done
-              '';
-          hookOwnershipGuard = ./nix/hook-ownership-guard.py;
-          guardedHookInstall = ''
-            (
-              set -eu
-              _own_hook_receipt="$(${pkgs.coreutils}/bin/mktemp)"
-              trap '${pkgs.coreutils}/bin/rm -f "$_own_hook_receipt"' EXIT
-              ${pkgs.python3}/bin/python3 ${hookOwnershipGuard} "$_own_repo_root" ${expectedNativeHook} prepare reserved ${pkgs.git}/share/git-core/templates > "$_own_hook_receipt"
-              _own_matching_repro="$(${pkgs.python3}/bin/python3 ${hookOwnershipGuard} "$_own_repo_root" ${expectedNativeHook} tool reserved ${pkgs.git}/share/git-core/templates)"
-              _own_install_needed=1
-              if [ -L "$_own_repo_root/${preCommit.config.configPath}" ] \
-                && [ "$(${pkgs.coreutils}/bin/readlink "$_own_repo_root/${preCommit.config.configPath}")" = "${preCommit.config.configFile}" ]; then
-                _own_install_needed=0
-              fi
-              ${preCommit.shellHook}
-              if [ "$_own_install_needed" -eq 1 ]; then
-                ${pkgs.python3}/bin/python3 ${hookOwnershipGuard} "$_own_repo_root" ${expectedNativeHook} native reserved ${pkgs.git}/share/git-core/templates
-              fi
-              "$_own_matching_repro" hooks ensure --vcs "$_own_repo_root"
-              ${pkgs.python3}/bin/python3 ${hookOwnershipGuard} "$_own_repo_root" ${expectedNativeHook} after "$_own_hook_receipt" ${pkgs.git}/share/git-core/templates
-            )
-            _own_hook_status=$?
-            if [ "$_own_hook_status" -ne 0 ]; then
-              unset _own_hook_status
-              exit 1
-            fi
-            unset _own_hook_status
-          '';
+          # The shared explicit installer (devops-modules lib/git-hooks-explicit-install.nix)
+          # runs the same-repository guard, the native installer and the Reprobuild
+          # handoff, and exports REPROBUILD_REPRO to the matching repro CLI.
+          explicitHookInstaller = import (inputs.standard-hooks-src + "/lib/git-hooks-explicit-install.nix") {
+            inherit pkgs preCommit;
+            expectedFlakeNixHash = builtins.hashFile "sha256" ./flake.nix;
+          };
 
           standardHooks = import (inputs.standard-hooks-src + "/git-hooks/standard-hooks.nix") {
             inherit pkgs;
@@ -150,7 +102,9 @@
               ]
               ++ preCommit.enabledPackages;
             shellHook = ''
-              ${ownRepoOnly guardedHookInstall}
+              ${ownRepoOnly ''
+                ${explicitHookInstaller}/bin/mcl-install-own-hooks || exit 1
+              ''}
               # Make Nim's httpclient pick up the system CA bundle so
               # TLS to api.elevenlabs.io works without user setup.
               export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
