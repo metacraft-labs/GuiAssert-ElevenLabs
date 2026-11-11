@@ -1,0 +1,9 @@
+schema = "reprobuild.solved-graph-lock.v3"
+
+[lock]
+platform = "amd64-linux"
+optimal = false
+inputs_digest = "fnv1a64:9a82f4101384d564"
+variants = []
+packages = [{ name = "elevenlabs_ffmpeg", version = "1.0.0", source = "elevenlabs_ffmpeg", selection = "selected" }, { name = "elevenlabs_ffprobe", version = "1.0.0", source = "elevenlabs_ffprobe", selection = "selected" }, { name = "gcc", version = "12.0.0", source = "gcc", selection = "selected" }, { name = "nim", version = "2.0.0", source = "nim", selection = "selected" }, { name = "projectEnvironment", version = "0.1.0", source = "projectEnvironment", selection = "selected" }]
+deps = [{ name = "GuiAssert", coord_kind = "vcs", url = "https://github.com/metacraft-labs/GuiAssert", ref = "", revision = "11b9494f3526aaccd31b68fc5709a2b9e9fd1aa0", integrity = "git-sha1:11b9494f3526aaccd31b68fc5709a2b9e9fd1aa0", version = "", visibility = "public", participation = "", depends = "", tags = "" }, { name = "GuiAssert-ElevenLabs", self = "true", coord_kind = "vcs", url = "https://github.com/metacraft-labs/GuiAssert-ElevenLabs", ref = "agents-to-dev-2026-10-04", revision = "f44eb2c88b31b44f777f15772d0e674f12487587", integrity = "git-sha1:f44eb2c88b31b44f777f15772d0e674f12487587", version = "", visibility = "public", participation = "", depends = "GuiAssert", tags = "" }]
