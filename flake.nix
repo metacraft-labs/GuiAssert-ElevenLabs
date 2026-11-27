@@ -94,7 +94,11 @@
                 just
                 git
                 curl
-                ffmpeg-full
+                # ffmpeg-full on Linux. On darwin, plain ffmpeg: ffmpeg-full needs
+                # kvazaar, which the caches lack for aarch64-darwin and whose tests
+                # fail when built there. Plain ffmpeg has every encoder the GuiAssert plugins use
+                # (libx264, aac, libmp3lame, pcm_s16le) and ffprobe.
+                (if stdenv.isLinux then ffmpeg-full else ffmpeg)
                 openssl
                 cacert
                 pre-commit
