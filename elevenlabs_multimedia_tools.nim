@@ -29,19 +29,35 @@ when defined(macosx):
       nixPackage "nixpkgs#ffmpeg", executablePath = "bin/ffmpeg",
         nixpkgsRev = owningNixpkgs["rev"].getStr,
         nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+    # Under --tool-provisioning=path, repro probes PATH for the use's
+    # selector (elevenlabs_ffmpeg) unless the package names its binary.
+    executable elevenlabs_ffmpeg:
+      name: "ffmpeg"
   package elevenlabs_ffprobe:
     provisioning:
       nixPackage "nixpkgs#ffmpeg", executablePath = "bin/ffprobe",
         nixpkgsRev = owningNixpkgs["rev"].getStr,
         nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+    # Under --tool-provisioning=path, repro probes PATH for the use's
+    # selector (elevenlabs_ffprobe) unless the package names its binary.
+    executable elevenlabs_ffprobe:
+      name: "ffprobe"
 else:
   package elevenlabs_ffmpeg:
     provisioning:
       nixPackage "nixpkgs#ffmpeg-full", executablePath = "bin/ffmpeg",
         nixpkgsRev = owningNixpkgs["rev"].getStr,
         nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+    # Under --tool-provisioning=path, repro probes PATH for the use's
+    # selector (elevenlabs_ffmpeg) unless the package names its binary.
+    executable elevenlabs_ffmpeg:
+      name: "ffmpeg"
   package elevenlabs_ffprobe:
     provisioning:
       nixPackage "nixpkgs#ffmpeg-full", executablePath = "bin/ffprobe",
         nixpkgsRev = owningNixpkgs["rev"].getStr,
         nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+    # Under --tool-provisioning=path, repro probes PATH for the use's
+    # selector (elevenlabs_ffprobe) unless the package names its binary.
+    executable elevenlabs_ffprobe:
+      name: "ffprobe"
