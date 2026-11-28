@@ -18,13 +18,30 @@ proc resolvedInputNode(lock, reference: JsonNode; depth = 0): string =
 let lockDocument = parseJson(owningLock)
 let owningNixpkgs = lockDocument["nodes"][resolvedInputNode(lockDocument,
   lockDocument["nodes"][lockDocument["root"].getStr]["inputs"]["nixpkgs"])]["locked"]
-package elevenlabs_ffmpeg:
-  provisioning:
-    nixPackage "nixpkgs#ffmpeg-full", executablePath = "bin/ffmpeg",
-      nixpkgsRev = owningNixpkgs["rev"].getStr,
-      nixpkgsNarHash = owningNixpkgs["narHash"].getStr
-package elevenlabs_ffprobe:
-  provisioning:
-    nixPackage "nixpkgs#ffmpeg-full", executablePath = "bin/ffprobe",
-      nixpkgsRev = owningNixpkgs["rev"].getStr,
-      nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+# ffmpeg-full off macOS, plain ffmpeg on it: the same split as the dev shell
+# in flake.nix. ffmpeg-full needs kvazaar, which no cache has for
+# aarch64-darwin, and building it there fails its own tests. Plain ffmpeg
+# has the encoders this plugin uses (libmp3lame, pcm_s16le) and ffprobe.
+# Two literal branches, because nixPackage takes only a string literal.
+when defined(macosx):
+  package elevenlabs_ffmpeg:
+    provisioning:
+      nixPackage "nixpkgs#ffmpeg", executablePath = "bin/ffmpeg",
+        nixpkgsRev = owningNixpkgs["rev"].getStr,
+        nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+  package elevenlabs_ffprobe:
+    provisioning:
+      nixPackage "nixpkgs#ffmpeg", executablePath = "bin/ffprobe",
+        nixpkgsRev = owningNixpkgs["rev"].getStr,
+        nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+else:
+  package elevenlabs_ffmpeg:
+    provisioning:
+      nixPackage "nixpkgs#ffmpeg-full", executablePath = "bin/ffmpeg",
+        nixpkgsRev = owningNixpkgs["rev"].getStr,
+        nixpkgsNarHash = owningNixpkgs["narHash"].getStr
+  package elevenlabs_ffprobe:
+    provisioning:
+      nixPackage "nixpkgs#ffmpeg-full", executablePath = "bin/ffprobe",
+        nixpkgsRev = owningNixpkgs["rev"].getStr,
+        nixpkgsNarHash = owningNixpkgs["narHash"].getStr
