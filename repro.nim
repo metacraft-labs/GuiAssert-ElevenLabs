@@ -19,13 +19,16 @@ package projectEnvironment:
     "elevenlabs_ffprobe"
   build:
     let inputs = @["src", "tests", "config.nims", "gui_assert_elevenlabs.nimble",
-      "flake.lock", "elevenlabs_multimedia_tools.nim", "../GuiAssert/src"]
+      "flake.lock", "elevenlabs_multimedia_tools.nim", "../GuiAssert/src",
+      "../DemoVideoStudio/src"]
     let backend = when defined(macosx): @["clang"] else: @["gcc"]
     var builds, executes: seq[BuildActionDef] = @[]
     for stem in ["tnimcache_is_worktree_local", "televenlabs", "temotive_translation"]:
       let edge = buildNimUnittest.build(source = "tests/" & stem & ".nim",
         binary = "build/test-bin/" & stem,
-        paths = @["src", "../GuiAssert/src"],
+        # The plugin contract the tests import comes from DemoVideoStudio, the
+        # sibling the Justfile and the nimble task also name.
+        paths = @["src", "../GuiAssert/src", "../DemoVideoStudio/src"],
         threadsOn = stem != "tnimcache_is_worktree_local",
         hintsOff = true, warningsOff = false,
         actionId = "elevenlabs.test_build." & stem, extraInputs = inputs)
