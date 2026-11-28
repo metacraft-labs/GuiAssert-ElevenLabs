@@ -38,3 +38,5 @@ tests/tnimcache_is_worktree_local
 # Explicit declared typed test outputs and compiler intermediates.
 /build/test-bin/
 /build/nimcache/
+# The provider-contract test binary (built by `just test`).
+tests/tcontract
